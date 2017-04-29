@@ -20,4 +20,6 @@
 	//$config['root']				= '/';
 	
 	
+$config['proxy_check'] = true; // If user is using a transparent proxy, see if their actual IP is banned. If it is banned, don't let them post.
+
 ?>
