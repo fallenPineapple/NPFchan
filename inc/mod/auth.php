@@ -5,6 +5,7 @@
  */
 
 defined('TINYBOARD') or exit;
+required_once 'inc/functions.php';
 
 // create a hash/salt pair for validate logins
 function mkhash($username, $password, $salt = false) {
@@ -18,12 +19,13 @@ function mkhash($username, $password, $salt = false) {
 	}
 	
 	// generate hash (method is not important as long as it's strong)
+	$identity = getIdentity();
 	$hash = substr(
 		base64_encode(
 			md5(
 				$username . $config['cookies']['salt'] . sha1(
 					$username . $password . $salt . (
-						$config['mod']['lock_ip'] ? $_SERVER['REMOTE_ADDR'] : ''
+						$config['mod']['lock_ip'] ? $identity : ''
 					), true
 				) . sha1($config['password_crypt_version']) // Log out users being logged in with older password encryption schema
 				, true
@@ -131,7 +133,7 @@ function modLog($action, $_board=null) {
 	global $mod, $board, $config;
 	$query = prepare("INSERT INTO ``modlogs`` VALUES (:id, :ip, :board, :time, :text)");
 	$query->bindValue(':id', (isset($mod['id']) ? $mod['id'] : -1), PDO::PARAM_INT);
-	$query->bindValue(':ip', $_SERVER['REMOTE_ADDR']);
+	$query->bindValue(':ip', $identity);
 	$query->bindValue(':time', time(), PDO::PARAM_INT);
 	$query->bindValue(':text', $action);
 	if (isset($_board))

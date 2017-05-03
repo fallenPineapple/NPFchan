@@ -5,7 +5,7 @@
  */
 
 defined('TINYBOARD') or exit;
-
+require_once 'inc/functions.php';
 class Filter {
 	public $flood_check;
 	private $condition;
@@ -38,7 +38,8 @@ class Filter {
 					foreach ($match as $flood_match_arg) {
 						switch ($flood_match_arg) {
 							case 'ip':
-								if ($flood_post['ip'] != $_SERVER['REMOTE_ADDR'])
+								$identity = getIdentity();
+								if($flood_post['ip'] != $identity)
 									continue 3;
 								break;
 							case 'body':
@@ -117,7 +118,8 @@ class Filter {
 				}
 				return false;
 			case 'ip':
-				return preg_match($match, $_SERVER['REMOTE_ADDR']);
+				$identity = getIdentity();
+				return preg_match($match, $identity);
 			case 'op':
 				return $post['op'] == $match;
 			case 'has_file':
@@ -135,9 +137,10 @@ class Filter {
 		global $board;
 
 		$this->add_note = isset($this->add_note) ? $this->add_note : false;
+		$identity = getIdentity();
 		if ($this->add_note) {
 			$query = prepare('INSERT INTO ``ip_notes`` VALUES (NULL, :ip, :mod, :time, :body)');
-	                $query->bindValue(':ip', $_SERVER['REMOTE_ADDR']);
+	                $query->bindValue(':ip', $identity);
         	        $query->bindValue(':mod', -1);
 	                $query->bindValue(':time', time());
 	                $query->bindValue(':body', "Autoban message: ".$this->post['body']);
@@ -147,6 +150,7 @@ class Filter {
 			case 'reject':
 				error(isset($this->message) ? $this->message : 'Posting throttled by filter.');
 			case 'ban':
+				$identity = getIdentity();
 				if (!isset($this->reason))
 					error('The ban action requires a reason.');
 				
@@ -157,7 +161,7 @@ class Filter {
 				// Get user cookie
 				$cookie = get_uuser_cookie();
 				
-				Bans::new_ban($_SERVER['REMOTE_ADDR'], $cookie, $this->reason, $this->expires, $this->all_boards ? false : $board['uri'], -1);
+				Bans::new_ban($identity, $cookie, $this->reason, $this->expires, $this->all_boards ? false : $board['uri'], -1);
 
 
 				if ($this->reject) {
@@ -226,11 +230,13 @@ function do_filters(array $post) {
 	
 	if (isset($has_flood)) {
 		if ($post['has_file']) {
+			$identity = getIdentity();
 			$query = prepare("SELECT * FROM ``flood`` WHERE `ip` = :ip OR `posthash` = :posthash OR `filehash` = :filehash");
-			$query->bindValue(':ip', $_SERVER['REMOTE_ADDR']);
+			$query->bindValue(':ip', $identity);
 			$query->bindValue(':posthash', make_comment_hex($post['body_nomarkup']));
 			$query->bindValue(':filehash', $post['filehash']);
 		} else {
+			$identity = getIdentity();
 			$query = prepare("SELECT * FROM ``flood`` WHERE `ip` = :ip OR `posthash` = :posthash");
 			$query->bindValue(':ip', $_SERVER['REMOTE_ADDR']);
 			$query->bindValue(':posthash', make_comment_hex($post['body_nomarkup']));
