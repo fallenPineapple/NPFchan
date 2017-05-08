@@ -35,6 +35,15 @@ register_shutdown_function('fatal_error_handler');
 mb_internal_encoding('UTF-8');
 loadConfig();
 
+function getIdentity(){
+	$userIP = (string) $_SERVER['REMOTE_ADDR'];
+// Use a static salt for testing. Switch to a rotating salt after getIdentity() is confirmed working.
+	$hashSalt = "oy9riUUcKw4ohX0IWMDy" // Thanks RANDOM.ORG!
+	$identity = crypt($userIP, '$2a$07$' . $hashSalt . '$')
+	return $identity;
+}
+
+
 function init_locale($locale, $error='error') {
 	if (extension_loaded('gettext')) {
 		if (setlocale(LC_ALL, $locale) === false) {
@@ -271,9 +280,10 @@ function loadConfig() {
 	}
 
 	// Keep the original address to properly comply with other board configurations
-	if (!isset($__ip))
-		$__ip = $_SERVER['REMOTE_ADDR'];
-
+	if (!isset($__ip)){
+		$identity = getIdentity();
+		$__ip = $identity;
+	}
 	// ::ffff:0.0.0.0
 	if (preg_match('/^\:\:(ffff\:)?(\d+\.\d+\.\d+\.\d+)$/', $__ip, $m))
 		$_SERVER['REMOTE_ADDR'] = $m[2];
@@ -570,10 +580,11 @@ function openBoard($uri) {
 	$b = getBoardInfo($uri);
 	if ($b) {
 		setupBoard($b);
-
-		if (function_exists('after_open_board')) {
-			after_open_board();
-		}
+// 8chan code is a bit different, if shit breaks, try uncommenting this and repreforming the installation from scratch.
+//
+//		if (function_exists('after_open_board')) {
+//			after_open_board();
+//		}
 
 		return true;
 	}
@@ -857,7 +868,9 @@ function displayBan($ban) {
 		Bans::seen($ban['id']);
 	}
 
-	$ban['ip'] = $_SERVER['REMOTE_ADDR'];
+	$identity = getIdentity();
+
+	$ban['ip'] = $identity;
 
 	if ($ban['post'] && isset($ban['post']['board'], $ban['post']['id'])) {
 		if (openBoard($ban['post']['board'])) {
@@ -946,7 +959,9 @@ function checkBan($board = false) {
 
 
 	foreach ($ips as $ip) {
-		$bans = Bans::find($_SERVER['REMOTE_ADDR'], $board, $config['show_modname']);
+		$identity = getIdentity();
+
+		$bans =Bans::find($identity, $board, $config['show_modname']);
 	
 		foreach ($bans as &$ban) {
 			if ($ban['expires'] && $ban['expires'] < time()) {
@@ -1119,9 +1134,10 @@ function threadExists($id) {
 
 function insertFloodPost(array $post) {
 	global $board;
+	$identity = getIdentity();
 	
 	$query = prepare("INSERT INTO ``flood`` VALUES (NULL, :ip, :board, :time, :posthash, :filehash, :isreply)");
-	$query->bindValue(':ip', $_SERVER['REMOTE_ADDR']);
+	$query->bindValue(':ip', $identity);
 	$query->bindValue(':board', $board['uri']);
 	$query->bindValue(':time', time());
 	$query->bindValue(':posthash', make_comment_hex($post['body_nomarkup']));
@@ -1793,10 +1809,11 @@ function muteTime() {
 	if ($time = event('mute-time'))
 		return $time;
 
+	$identity = getIdentity();
 	// Find number of mutes in the past X hours
 	$query = prepare("SELECT COUNT(*) FROM ``mutes`` WHERE `time` >= :time AND `ip` = :ip");
 	$query->bindValue(':time', time()-($config['robot_mute_hour']*3600), PDO::PARAM_INT);
-	$query->bindValue(':ip', $_SERVER['REMOTE_ADDR']);
+	$query->bindValue(':ip', $identity);
 	$query->execute() or error(db_error($query));
 
 	if (!$result = $query->fetchColumn())
@@ -1808,7 +1825,7 @@ function mute() {
 	// Insert mute
 	$query = prepare("INSERT INTO ``mutes`` VALUES (:ip, :time)");
 	$query->bindValue(':time', time(), PDO::PARAM_INT);
-	$query->bindValue(':ip', $_SERVER['REMOTE_ADDR']);
+	$query->bindValue(':ip', $identity);
 	$query->execute() or error(db_error($query));
 
 	return muteTime();
@@ -1819,16 +1836,17 @@ function checkMute() {
 
 	if ($config['cache']['enabled']) {
 		// Cached mute?
-		if (($mute = cache::get("mute_${_SERVER['REMOTE_ADDR']}")) && ($mutetime = cache::get("mutetime_${_SERVER['REMOTE_ADDR']}"))) {
+		if (($mute = cache::get("mute_$identity")) && ($mutetime = cache::get("mutetime_$identity"))) {
 			error(sprintf($config['error']['youaremuted'], $mute['time'] + $mutetime - time()));
 		}
 	}
 
 	$mutetime = muteTime();
 	if ($mutetime > 0) {
+		$identity = getIdentity();
 		// Find last mute time
 		$query = prepare("SELECT `time` FROM ``mutes`` WHERE `ip` = :ip ORDER BY `time` DESC LIMIT 1");
-		$query->bindValue(':ip', $_SERVER['REMOTE_ADDR']);
+		$query->bindValue(':ip', $identity);
 		$query->execute() or error(db_error($query));
 
 		if (!$mute = $query->fetch(PDO::FETCH_ASSOC)) {
@@ -1838,8 +1856,10 @@ function checkMute() {
 
 		if ($mute['time'] + $mutetime > time()) {
 			if ($config['cache']['enabled']) {
-				cache::set("mute_${_SERVER['REMOTE_ADDR']}", $mute, $mute['time'] + $mutetime - time());
-				cache::set("mutetime_${_SERVER['REMOTE_ADDR']}", $mutetime, $mute['time'] + $mutetime - time());
+
+				$identity = $getIdentity();
+				cache::set("mute_${identity}", $mute, $mute['time'] + $mutetime - time());
+				cache::set("mutetime_${identity}", $mutetime, $mute['time'] + $mutetime - time());
 			}
 			// Not expired yet
 			error(sprintf($config['error']['youaremuted'], $mute['time'] + $mutetime - time()));
@@ -2942,7 +2962,7 @@ function max_posts_per_hour($post) {
 
 	if ($post['op']) {
 		$query = prepare(sprintf('SELECT COUNT(*) AS `count` FROM ``posts_%s`` WHERE `thread` IS NULL AND FROM_UNIXTIME(`time`) > DATE_SUB(NOW(), INTERVAL 1 HOUR);', $board['uri']));
-		$query->bindValue(':ip', $_SERVER['REMOTE_ADDR'], PDO::PARAM_STR);
+		$query->bindValue(':ip', $identity, PDO::PARAM_STR); // Not originally in 8chan commit I believe... Still seems appropriate.
 		$query->execute() or error(db_error($query));
 		$r = $query->fetch(PDO::FETCH_ASSOC);
 

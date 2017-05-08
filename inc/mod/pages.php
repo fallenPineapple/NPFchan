@@ -321,8 +321,6 @@ function mod_search($type, $search_query_escaped, $page_no = 1) {
 	
 	if ($type == 'bans') {
 		foreach ($results as &$ban) {
-			$ban['mask'] = Bans::range_to_string(array($ban['ipstart'], $ban['ipend']));
-			if (filter_var($ban['mask'], FILTER_VALIDATE_IP) !== false)
 				$ban['single_addr'] = true;
 		}
 	}
@@ -1126,14 +1124,13 @@ function mod_ban_appeals() {
 			error(_('Ban appeal not found!'));
 		}
 		
-		$ban['mask'] = Bans::range_to_string(array($ban['ipstart'], $ban['ipend']));
-		
+
 		if (isset($_POST['unban'])) {
-			modLog('Accepted ban appeal #' . $ban['id'] . ' for ' . $ban['mask']);
+			modLog('Accepted ban appeal #' . $ban['id'] . ' for ' . $ban['iphash']);
 			Bans::delete($ban['ban_id'], true);
 			query("DELETE FROM ``ban_appeals`` WHERE `id` = " . $ban['id']) or error(db_error());
 		} else {
-			modLog('Denied ban appeal #' . $ban['id'] . ' for ' . $ban['mask']);
+			modLog('Denied ban appeal #' . $ban['id'] . ' for ' . $ban['iphash']);
 			query("UPDATE ``ban_appeals`` SET `denied` = 1 WHERE `id` = " . $ban['id']) or error(db_error());
 		}
 		
@@ -1147,9 +1144,12 @@ function mod_ban_appeals() {
 		WHERE `denied` != 1 ORDER BY `time`") or error(db_error());
 	$ban_appeals = $query->fetchAll(PDO::FETCH_ASSOC);
 	foreach ($ban_appeals as &$ban) {
-		if ($ban['post'])
-			$ban['post'] = json_decode($ban['post'], true);
-		$ban['mask'] = Bans::range_to_string(array($ban['ipstart'], $ban['ipend']));
+		if ($ban['post']){
+			$ban['post'] = json_decode($ban['post'], true);	
+		}
+
+		
+		
 		
 		if ($ban['post'] && isset($ban['post']['board'], $ban['post']['id'])) {
 			if (openBoard($ban['post']['board'])) {
