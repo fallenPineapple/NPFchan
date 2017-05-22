@@ -1694,6 +1694,7 @@ $config['nicenotice_reasons'][] = "We care, and we hope you feel better soon. We
 	$config['mod']['forcedflag'] = MOD;
 	$config['mod']['forcedflag_countries'] = array(
 		38 		=>	'Canada',
+		107	=>	'Jewish',
 		256 	=>	'Gypsy',
 		257 	=>	'Gay'
 	);
