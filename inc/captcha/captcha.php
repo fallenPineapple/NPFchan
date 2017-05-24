@@ -20,7 +20,7 @@ class CzaksCaptcha {
 
     for ($i = 0; $i < $len; $i++) {
       $this->content[] = array(mb_substr($text, $i, 1, 'utf-8'), "top" => $top / 2 - $top / 4,
-                                                                 "left" => $left/10 + 9*$left*$i/10/$len,
+                                                                 "left" => 20 + ($i * ($this->width - 10)) / $len,
                                                                  "position" => "absolute");
     }
 
