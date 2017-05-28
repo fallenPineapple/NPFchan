@@ -305,6 +305,10 @@ div.post.reply {
   max-width: 94%!important;
 }
 
+.sidearrows {
+	display:none;
+}
+
 span.trip {
   color: #228854;
 }
