@@ -80,7 +80,7 @@ function generateEmbedId() {
 function getEmbedHTML(type, width, height, data) {
 	switch (type) {
 		case 'youtube':
-			return '<iframe width="' + width + '" height="' + height + '" src="https://href.li/?https://hooktube.com/embed/' + data + '?autoplay=1" frameborder="0" allowfullscreen scrolling="no"></iframe>';
+			return '<iframe width="' + width + '" height="' + height + '" src="https://href.li/?https://invidio.us/embed/' + data + '?autoplay=1" frameborder="0" allowfullscreen scrolling="no"></iframe>';
 		case 'dailymotion':
 			return '<iframe width="' + width + '" height="' + height + '" src="https://href.li/?https://www.dailymotion.com/embed/video/' + data + '?autoplay=1" frameborder="0" allowfullscreen></iframe>';
 		case 'vimeo':

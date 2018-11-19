@@ -1377,7 +1377,7 @@ $config['nicenotice_reasons'][] = "We care, and we hope you feel better soon. We
 	$config['embed_height'] = 246;
 
 	$config['embed_url_regex'] = array(
-		array('youtube', '/(?:youtu\.be\/|(?:youtube\.com\/|hooktube\.com\/)(?:embed\/|watch\?v=|watch\?.+?&v=))([^\s?&#\/]+)/i'),
+		array('youtube', '/(?:youtu\.be\/|(?:youtube\.com\/|hooktube\.com\/|invidio\.us\/)(?:embed\/|watch\?v=|watch\?.+?&v=))([^\s?&#\/]+)/i'),
 		array('vimeo', '/vimeo\.com\/(\d{2,10})/i'),
 		array('dailymotion', '/dailymotion\.com\/video\/([a-zA-Z0-9]{2,10})/i'),
 		array('vidme', '/vid\.me\/([^\s?&#\/]+)/i'),
