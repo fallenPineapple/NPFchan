@@ -683,12 +683,12 @@ if (file_exists($config['has_installed'])) {
 				) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 			') or error(db_error());
 			foreach ($boards as &$board) {
-				query(sprintf("ALTER TABLE ``posts_%s`` ADD `cookie` varchar(40) CHARACTER SET ascii NOT NULL AFTER `ip`", $board['uri'])) or error(db_error());
+				query(sprintf("ALTER TABLE ``posts_%s`` CHANGE `cookie` `cookie` varchar(40) CHARACTER SET ascii NOT NULL AFTER `ip`", $board['uri'])) or error(db_error());
 				query(sprintf("ALTER TABLE ``posts_%s`` CHANGE `ip` `ip` VARCHAR(61) CHARACTER SET ascii NOT NULL;", $board['uri'])) or error(db_error());
 			}	
-			query('ALTER TABLE ``bans`` ADD `cookie` VARCHAR(40) CHARACTER SET ascii NOT NULL AFTER `ipend`;') or error(db_error());
+			query('ALTER TABLE ``bans`` CHANGE `cookie` `cookie` VARCHAR(40) CHARACTER SET ascii NOT NULL AFTER `ipend`;') or error(db_error());
 			query('ALTER TABLE ``bans`` ADD INDEX(`cookie`);') or error(db_error());
-			query('ALTER TABLE ``bans`` ADD `cookiebanned` BOOLEAN NOT NULL AFTER `cookie`;') or error(db_error());
+			query('ALTER TABLE ``bans`` CHANGE `cookiebanned` `cookiebanned` BOOLEAN NOT NULL AFTER `cookie`;') or error(db_error());
 			query('ALTER TABLE ``bans`` CHANGE `ipstart` `ipstart` VARBINARY(61) NOT NULL;') or error(db_error());
 			query('ALTER TABLE ``bans`` CHANGE `ipend` `ipend` VARBINARY(61) DEFAULT NULL;') or error(db_error());
 			query('ALTER TABLE ``flood`` CHANGE `ip` `ip` VARCHAR(61) CHARACTER SET ascii COLLATE ascii_bin NOT NULL;') or error(db_error());
@@ -817,8 +817,8 @@ if (file_exists($config['has_installed'])) {
 			') or error(db_error());
 		case '6.0.6':
 			foreach ($boards as &$board) {
-				query(sprintf("ALTER TABLE ``posts_%s`` ADD `hideid` INT(1) NOT NULL DEFAULT '0' AFTER `sage`;", $board['uri'])) or error(db_error());
-				query(sprintf("ALTER TABLE ``shadow_posts_%s`` ADD `hideid` INT(1) NOT NULL DEFAULT '0' AFTER `sage`;", $board['uri'])) or error(db_error());
+				query(sprintf("ALTER TABLE ``posts_%s`` CHANGE `hideid` `hideid` INT(1) NOT NULL DEFAULT '0' AFTER `sage`;", $board['uri'])) or error(db_error());
+				query(sprintf("ALTER TABLE ``shadow_posts_%s`` CHANGE `hideid` `hideid` INT(1) NOT NULL DEFAULT '0' AFTER `sage`;", $board['uri'])) or error(db_error());
 			}
 		case false:
 			// TODO: enhance Tinyboard -> vichan upgrade path.
