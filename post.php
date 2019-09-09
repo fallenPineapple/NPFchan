@@ -758,23 +758,21 @@ if (isset($_POST['delete'])) {
 						$i++;
 					}
 				}
-			} else {
-				if ($file['size'] && $file['tmp_name']) {
-					$file['filename'] = urldecode($file['name']);
-					$file['extension'] = strtolower(mb_substr($file['filename'], mb_strrpos($file['filename'], '.') + 1));
-					if (isset($config['filename_func']))
-						$file['file_id'] = $config['filename_func']($file);
-					else
-						$file['file_id'] = time() . substr(microtime(), 2, 3);
+			} else if ($file['size'] && $file['tmp_name']) {
+				$file['filename'] = urldecode($file['name']);
+				$file['extension'] = strtolower(mb_substr($file['filename'], mb_strrpos($file['filename'], '.') + 1));
+				if (isset($config['filename_func']))
+					$file['file_id'] = $config['filename_func']($file);
+				else
+					$file['file_id'] = time() . substr(microtime(), 2, 3);
 
-					if (sizeof($_FILES) > 1)
-						$file['file_id'] .= "-$i";
+				if (sizeof($_FILES) > 1)
+					$file['file_id'] .= "-$i";
 					
-					$file['file_path'] = $board['dir'] . $config['dir']['img'] . $file['file_id'] . '.' . $file['extension'];
-					$file['thumb_path'] = $board['dir'] . $config['dir']['thumb'] . $file['file_id'] . '.' . ($config['thumb_ext'] ? $config['thumb_ext'] : $file['extension']);
-					$post['files'][] = $file;
-					$i++;
-				}
+				$file['file_path'] = $board['dir'] . $config['dir']['img'] . $file['file_id'] . '.' . $file['extension'];
+				$file['thumb_path'] = $board['dir'] . $config['dir']['thumb'] . $file['file_id'] . '.' . ($config['thumb_ext'] ? $config['thumb_ext'] : $file['extension']);
+				$post['files'][] = $file;
+				$i++;
 			}
 		}
 	}
