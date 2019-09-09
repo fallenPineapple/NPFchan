@@ -1082,22 +1082,32 @@ if (isset($_POST['delete'])) {
 			$file['thumbheight'] = $size[1];
 		}
 
-		if ($config['tesseract_ocr'] && !isset($file['thumb'])) { // Let's OCR it! (Unless thumb is already determined to be a file icon or spoiler)
-			$fname = ($file['height'] > 500 || $file['width'] > 500) ? $file['thumb_path'] : $file['tmp_name'];
-			$tmpname = "tmp/tesseract/".rand(0,10000000);
+		if ($config['tesseract_ocr'] && $file['is_an_image']) { // Let's OCR it!
+			$fname = '';
+			if ($file['height'] > 500 || $file['width'] > 500) {
+				if ($file['thumb'] != 'spoiler') {
+					$fname = $file['thumb_path'];
+				}
+			}
+			else
+			    $fname = $file['tmp_name'];
+			
+			if ($fname != '') {
+				$tmpname = "tmp/tesseract/".rand(0,10000000);
 
-			// Preprocess command is an ImageMagick b/w quantization
-			$error = shell_exec_error(sprintf($config['tesseract_preprocess_command'], escapeshellarg($fname)) . " | " .
+				// Preprocess command is an ImageMagick b/w quantization
+				$error = shell_exec_error(sprintf($config['tesseract_preprocess_command'], escapeshellarg($fname)) . " | " .
                                                           'tesseract stdin '.escapeshellarg($tmpname).' '.$config['tesseract_params']);
-			$tmpname .= ".txt";
+				$tmpname .= ".txt";
 
-			$value = @file_get_contents($tmpname);
-			@unlink($tmpname);
+				$value = @file_get_contents($tmpname);
+				@unlink($tmpname);
 
-			if ($value && trim($value)) {
-				// This one has an effect, that the body is appended to a post body. So you can write a correct
-				// spamfilter.
-				$post['body_nomarkup'] .= "<tinyboard ocr image $key>".htmlspecialchars($value)."</tinyboard>";
+				if ($value && trim($value)) {
+					// This one has an effect, that the body is appended to a post body. So you can write a correct
+					// spamfilter.
+					$post['body_nomarkup'] .= "<tinyboard ocr image $key>".htmlspecialchars($value)."</tinyboard>";
+				}
 			}
 		}
 		
