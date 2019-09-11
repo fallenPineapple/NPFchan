@@ -1323,9 +1323,9 @@ function mod_bans() {
 		
 		foreach ($unban as $id) {
 			if(hasPermission($config['mod']['unban_all_boards']))
-				Bans::delete($_POST['ban_id'], true, false, true);
+				Bans::delete($id, true, false, true);
 			else
-				Bans::delete($_POST['ban_id'], true, $mod['boards'], true);
+				Bans::delete($id, true, $mod['boards'], true);
 		}
                 rebuildThemes('bans');
 		header('Location: ?/bans', true, $config['redirect_http']);
