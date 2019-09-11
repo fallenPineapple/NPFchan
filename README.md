@@ -7,8 +7,20 @@ This is the a fork of vichan running on [mlpol.net](https://mlpol.net), a free l
 imageboard software package. It is written in PHP and has few dependencies.
 
 NPFchan is a fork of [vichan](https://github.com/vichan-devel/vichan) which is a fork of (now defunc'd) [Tinyboard](http://github.com/savetheinternet/Tinyboard),
+=======
+In November 2017, Marcin Łabanowski (@czaks) retired as maintainer for personal reasons. His retirement may be temporary, but in his absence, Fredrick Brennan (@ctrlcctrlv), co-maintainer since 2013, and #3 in terms of number of commits, took his place as interim sole maintianer and point of contact. (See [issue #266](https://github.com/vichan-devel/vichan/issues/266))
+
+*Security problems can be reported to Fredrick Brennan at his email: COPYPASTE \<AT\> KITTENS \<DOT\> PH.*
+	
+Vichan is still accepting patches, but there is at the moment no active development besides fixing security problems and other serious bugs as they emerge. Given the lack of active development, we strongly urge you to consider other imageboard packages. It is the opinion of the vichan development team that no new vichan imageboards should be deployed, and other imageboard packages, such as lynxchan, used instead.
+
+History
+------------
+vichan is a fork of (now defunc'd) [Tinyboard](http://github.com/savetheinternet/Tinyboard),
 a great imageboard package, actively building on it and adding a lot of features and other
 improvements.
+
+Some documentation may be found on our [wiki](https://github.com/vichan-devel/vichan/wiki). (feel free to contribute)
 
 Requirements
 ------------
@@ -17,10 +29,9 @@ Requirements
 3.	[mbstring](http://www.php.net/manual/en/mbstring.installation.php) 
 4.	[PHP GD](http://www.php.net/manual/en/intro.image.php)
 5.	[PHP PDO](http://www.php.net/manual/en/intro.pdo.php)
+6.	A Unix-like OS, preferrably FreeBSD or Linux
 
-We try to make sure NPFchan is compatible with all major web servers and
-operating systems. NPFchan does not include an Apache ```.htaccess``` file nor does
-it need one.
+We try to make sure vichan is compatible with all major web servers. vichan does not include an Apache ```.htaccess``` file nor does it need one.
 
 ### Recommended
 1.	MySQL >= 5.7
@@ -42,7 +53,7 @@ See the [Installation Guide](https://github.com/fallenPineapple/NPFchan/wiki/Ins
 
 Please remember to change the administrator account password.
 
-See also: [Configuration Basics](https://github.com/fallenPineapple/NPFchan/wiki/Configuration).
+See also: [Configuration Basics](https://github.com/fallenPineapple/NPFchan/wiki/config).
 
 Upgrade
 -------
@@ -61,21 +72,6 @@ As it stands NPFchan has no public support system.
 ### vichan support
 vichan is still beta software -- there are bound to be bugs. If you find a
 bug, please report it.
-
-If you need assistance with installing, configuring, or using vichan, you may
-find support from a variety of sources:
-
-*	If you're unsure about how to enable or configure certain features, make
-	sure you have read the comments in ```inc/config.php```.
-*	Check out an [official vichan board](http://int.vichan.net/devel/).
-*	You can join vichan's IRC channel for support
-	[irc.6irc.net #vichan-devel](irc://irc.6irc.net/vichan-devel)
-
-### Tinyboard support
-vichan is based on a Tinyboard, so both engines have very much in common. These
-links may be helpful for you as well: 
-
-*	Tinyboard documentation can be found [here](https://web.archive.org/web/20121016074303/http://tinyboard.org/docs/?p=Main_Page).
 
 CLI tools
 -----------------

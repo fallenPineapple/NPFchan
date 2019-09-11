@@ -1,11 +1,11 @@
 -- phpMyAdmin SQL Dump
--- version 4.7.0
+-- version 4.8.4
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost
--- Generation Time: Jun 12, 2017 at 03:36 PM
--- Server version: 5.7.18-0ubuntu0.16.04.1
--- PHP Version: 7.0.18-0ubuntu0.16.04.1
+-- Generation Time: Dec 17, 2018 at 03:52 PM
+-- Server version: 5.7.24-0ubuntu0.16.04.1
+-- PHP Version: 7.0.32-0ubuntu0.16.04.1
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 SET time_zone = "+00:00";
@@ -46,6 +46,24 @@ CREATE TABLE IF NOT EXISTS `antispam` (
   PRIMARY KEY (`hash`),
   KEY `board` (`board`,`thread`),
   KEY `expires` (`expires`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `archive_b`
+--
+
+CREATE TABLE IF NOT EXISTS `archive_b` (
+  `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `snippet` text NOT NULL,
+  `lifetime` int(11) NOT NULL,
+  `files` mediumtext NOT NULL,
+  `featured` int(1) NOT NULL,
+  `mod_archived` int(1) NOT NULL,
+  `votes` int(10) UNSIGNED NOT NULL,
+  UNIQUE KEY `id` (`id`),
+  KEY `lifetime` (`lifetime`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------
@@ -258,7 +276,7 @@ CREATE TABLE IF NOT EXISTS `mods` (
 --
 
 INSERT INTO `mods` (`id`, `username`, `password`, `version`, `type`, `boards`) VALUES
-(1, 'admin', 'cedad442efeef7112fed0f50b011b2b9bf83f6898082f995f69dd7865ca19fb7', '4a44c6c55df862ae901b413feecb0d49', 30, '*');
+(1, 'admin', '$6$rounds=25000$2GIRIR9OmuI0DU48$87BMSXVc64ElvQyoTGcnIDRfRlyF81NZ2LxxKrKzf4ye7cJTvPbOwZNLv2sBBZzIvGTw.9NjZilc9wSCaA6aV0', '1', 30, '*');
 
 -- --------------------------------------------------------
 
@@ -378,6 +396,45 @@ CREATE TABLE IF NOT EXISTS `pms` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `posts_b`
+--
+
+CREATE TABLE IF NOT EXISTS `posts_b` (
+  `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `thread` int(11) DEFAULT NULL,
+  `subject` varchar(100) DEFAULT NULL,
+  `email` varchar(30) DEFAULT NULL,
+  `name` varchar(35) DEFAULT NULL,
+  `trip` varchar(15) DEFAULT NULL,
+  `capcode` varchar(50) DEFAULT NULL,
+  `body` text NOT NULL,
+  `body_nomarkup` text,
+  `time` int(11) NOT NULL,
+  `bump` int(11) DEFAULT NULL,
+  `files` text,
+  `num_files` int(11) DEFAULT '0',
+  `filehash` text CHARACTER SET ascii,
+  `password` varchar(20) DEFAULT NULL,
+  `ip` varchar(61) CHARACTER SET ascii NOT NULL,
+  `cookie` varchar(40) CHARACTER SET ascii NOT NULL,
+  `sticky` int(1) NOT NULL,
+  `locked` int(1) NOT NULL,
+  `cycle` int(1) NOT NULL,
+  `sage` int(1) NOT NULL,
+  `hideid` int(1) NOT NULL,
+  `embed` text,
+  `slug` varchar(256) DEFAULT NULL,
+  UNIQUE KEY `id` (`id`),
+  KEY `thread_id` (`thread`,`id`),
+  KEY `filehash` (`filehash`(40)),
+  KEY `time` (`time`),
+  KEY `ip` (`ip`),
+  KEY `list_threads` (`thread`,`sticky`,`bump`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `reports`
 --
 
@@ -485,6 +542,45 @@ CREATE TABLE IF NOT EXISTS `shadow_filehashes` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `shadow_posts_b`
+--
+
+CREATE TABLE IF NOT EXISTS `shadow_posts_b` (
+  `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `thread` int(11) DEFAULT NULL,
+  `subject` varchar(100) DEFAULT NULL,
+  `email` varchar(30) DEFAULT NULL,
+  `name` varchar(35) DEFAULT NULL,
+  `trip` varchar(15) DEFAULT NULL,
+  `capcode` varchar(50) DEFAULT NULL,
+  `body` text NOT NULL,
+  `body_nomarkup` text,
+  `time` int(11) NOT NULL,
+  `bump` int(11) DEFAULT NULL,
+  `files` text,
+  `num_files` int(11) DEFAULT '0',
+  `filehash` text CHARACTER SET ascii,
+  `password` varchar(20) DEFAULT NULL,
+  `ip` varchar(61) CHARACTER SET ascii NOT NULL,
+  `cookie` varchar(40) CHARACTER SET ascii NOT NULL,
+  `sticky` int(1) NOT NULL,
+  `locked` int(1) NOT NULL,
+  `cycle` int(1) NOT NULL,
+  `sage` int(1) NOT NULL,
+  `hideid` int(1) NOT NULL,
+  `embed` text,
+  `slug` varchar(256) DEFAULT NULL,
+  UNIQUE KEY `id` (`id`),
+  KEY `thread_id` (`thread`,`id`),
+  KEY `filehash` (`filehash`(40)),
+  KEY `time` (`time`),
+  KEY `ip` (`ip`),
+  KEY `list_threads` (`thread`,`sticky`,`bump`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `theme_settings`
 --
 
@@ -493,6 +589,22 @@ CREATE TABLE IF NOT EXISTS `theme_settings` (
   `name` varchar(40) DEFAULT NULL,
   `value` text,
   KEY `theme` (`theme`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `votes_archive`
+--
+
+CREATE TABLE IF NOT EXISTS `votes_archive` (
+  `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `board` varchar(58) NOT NULL,
+  `thread_id` int(10) NOT NULL,
+  `ip` varchar(61) CHARACTER SET ascii NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `id` (`id`),
+  KEY `ip` (`ip`,`board`,`thread_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------
@@ -517,35 +629,20 @@ CREATE TABLE IF NOT EXISTS `warnings` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `votes_archive`
---
-
-CREATE TABLE IF NOT EXISTS `votes_archive` (
-  `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-  `board` varchar(58) CHARACTER SET utf8mb4 NOT NULL,
-  `thread_id` int(10) NOT NULL,
-  `ip` varchar(61) CHARACTER SET ascii NOT NULL,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `id` (`id`),
-  KEY `ip` (`ip`, `board`, `thread_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
--- --------------------------------------------------------
-
---
 -- Table structure for table `whitelist`
 --
 
-CREATE TABLE IF NOT EXISTS `whitelist`  (
-  `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+CREATE TABLE IF NOT EXISTS `whitelist` (
+  `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT,
   `expiration_time` int(11) NOT NULL,
   `ip` varchar(61) CHARACTER SET ascii NOT NULL,
   `cookie` varchar(40) CHARACTER SET ascii NOT NULL,
-  PRIMARY KEY `id` (`id`),
+  PRIMARY KEY (`id`),
   KEY `expiration_time` (`expiration_time`),
   KEY `ip` (`ip`),
   KEY `cookie` (`cookie`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
