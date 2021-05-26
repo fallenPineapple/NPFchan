@@ -292,7 +292,7 @@ class Bans {
 				$ban['single_addr'] = true;
 			}
 			if ($filter_staff || ($board_access !== false && !in_array($ban['board'], $board_access))) {
-				$ban['username'] = '?';				
+				$ban['username'] = '?';
 			}
 			if ($filter_ips || (($board_access !== false && !in_array($ban['board'], $board_access)) && !hasPermission($config['mod']['sitewide_post_info']))) {
 				if($config['bcrypt_ip_addresses']) {
@@ -327,7 +327,7 @@ class Bans {
 			}
 		}
 
-                $out ? fputs($out, "]") : print("]");
+		$out ? fputs($out, "]") : print("]");
 
 	}
 	

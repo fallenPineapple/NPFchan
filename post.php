@@ -1343,7 +1343,9 @@ if (isset($_POST['delete'])) {
 			'id' => $id
 		));
 	}
-	
+	skip_redirect:
+
+
 	if ($config['try_smarter'] && $post['op'])
 		$build_pages = range(1, $config['max_pages']);
 	

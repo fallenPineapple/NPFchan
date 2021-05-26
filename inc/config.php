@@ -194,6 +194,9 @@ $config['nicenotice_reasons'][] = "We care, and we hope you feel better soon. We
 	$config['debug'] = false;
 	// For development purposes. Displays (and "dies" on) all errors and warnings. Turn on with the above.
 	$config['verbose_errors'] = true;
+	// Warn about deprecations? See vichan-devel/vichan#363 and https://www.youtube.com/watch?v=9crnlHLVdno
+	$config['deprecation_errors'] = false;
+
 	// EXPLAIN all SQL queries (when in debug mode).
 	$config['debug_explain'] = false;
 
@@ -359,12 +362,11 @@ $config['nicenotice_reasons'][] = "We care, and we hope you feel better soon. We
 
 	// Prevents most Tor exit nodes from making posts. Recommended, as a lot of abuse comes from Tor because
 	// of the strong anonymity associated with it.
-	// $config['dnsbl'][] = array('tor.dnsbl.sectoor.de', 1);
-	// Example: $config['dnsbl'][] = 'another.blacklist.net'; // 
+	// Example: $config['dnsbl'][] = 'another.blacklist.net';
 	// $config['dnsbl'][] = array('tor.dnsbl.sectoor.de', 1); //sectoor.de site is dead. the number stands for (an) ip adress(es) I guess. 
-	
+
 	// Replacement for sectoor.de
-	$config['dnsbl'][] = 'torexit.dan.me.uk';
+	$config['dnsbl'][] = array('rbl.efnetrbl.org', 4);
 
 	// http://www.sorbs.net/using.shtml
 	// $config['dnsbl'][] = array('dnsbl.sorbs.net', array(2, 3, 4, 5, 6, 7, 8, 9));
@@ -386,6 +388,9 @@ $config['nicenotice_reasons'][] = "We care, and we hope you feel better soon. We
 
 	// Skip checking certain IP addresses against blacklists (for troubleshooting or whatever)
 	$config['dnsbl_exceptions'][] = '127.0.0.1';
+
+	// To prevent bump atacks; returns the thread to last position after the last post is deleted. 
+	$config['anti_bump_flood'] = false;
 
 	/*
 	 * Introduction to Tinyboard's spam filter:
@@ -420,7 +425,7 @@ $config['nicenotice_reasons'][] = "We care, and we hope you feel better soon. We
 
 	// How soon after regeneration do hashes expire (in seconds)?
 	$config['spam']['hidden_inputs_expire'] = 60 * 60 * 3; // three hours
-	
+
 	// Whether to use Unicode characters in hidden input names and values.
 	$config['spam']['unicode'] = true;
 
@@ -813,7 +818,7 @@ $config['nicenotice_reasons'][] = "We care, and we hope you feel better soon. We
 	// that you will have to disable BOTH country_flags and contry_flags_condensed optimization (at least on a board
 	// where they are enabled).
 	$config['user_flag'] = false;
-	
+
 	// List of user_flag the user can choose. Flags must be placed in the directory set by $config['uri_flags']
 	$config['user_flags'] = array();
 	/* example: 
@@ -830,7 +835,7 @@ $config['nicenotice_reasons'][] = "We care, and we hope you feel better soon. We
 
 	// Use semantic URLs for threads, like /b/res/12345/daily-programming-thread.html
 	$config['slugify'] = false;
-	
+
 	// Max size for slugs
 	$config['slug_max_size'] = 80;
 
@@ -914,10 +919,15 @@ $config['nicenotice_reasons'][] = "We care, and we hope you feel better soon. We
 	// "/```([a-z0-9-]{0,20})\n(.*?)\n?```\n?/s"
 	$config['markup_code'] = false;
 
-	// Repair markup with HTML Tidy. This may be slower, but it solves nesting mistakes. Tinyboad, at the
+	// Repair markup with HTML Tidy. This may be slower, but it solves nesting mistakes. Tinyboard, at the
 	// time of writing this, can not prevent out-of-order markup tags (eg. "**''test**'') without help from
 	// HTML Tidy.
 	$config['markup_repair_tidy'] = false;
+
+	// Use 'bare' config option of tidy::repairString.
+	// This option replaces some punctuation marks with their ASCII counterparts.
+	// Dashes are replaced with (single) hyphens, for example.
+	$config['markup_repair_tidy_bare'] = true;
 
 	// Always regenerate markup. This isn't recommended and should only be used for debugging; by default,
 	// Tinyboard only parses post markup when it needs to, and keeps post-markup HTML in the database. This
@@ -1348,27 +1358,23 @@ $config['nicenotice_reasons'][] = "We care, and we hope you feel better soon. We
 	$config['embedding'] = array(
 		array(
 			'/^https?:\/\/(\w+\.)?youtube\.com\/watch\?v=([a-zA-Z0-9\-_]{10,11})(&.+)?$/i',
-			'<iframe style="float: left;margin: 10px 20px;" width="%%tb_width%%" height="%%tb_height%%" frameborder="0" id="ytplayer" src="http://www.youtube.com/embed/$2"></iframe>'
+			'<iframe style="float: left; margin: 10px 20px;" width="%%tb_width%%" height="%%tb_height%%" frameborder="0" id="ytplayer" src="https://www.youtube.com/embed/$2"></iframe>'
 		),
 		array(
 			'/^https?:\/\/(\w+\.)?vimeo\.com\/(\d{2,10})(\?.+)?$/i',
-			'<iframe style="float: left;margin: 10px 20px;" width="%%tb_width%%" height="%%tb_height%%" src="https://player.vimeo.com/video/$2" frameborder="0"></iframe>'
+			'<iframe style="float: left; margin: 10px 20px;" width="%%tb_width%%" height="%%tb_height%%" frameborder="0" src="https://player.vimeo.com/video/$2"></iframe>'
 		),
 		array(
 			'/^https?:\/\/(\w+\.)?dailymotion\.com\/video\/([a-zA-Z0-9]{2,10})(_.+)?$/i',
-			'<object style="float: left;margin: 10px 20px;" width="%%tb_width%%" height="%%tb_height%%"><param name="movie" value="http://www.dailymotion.com/swf/video/$2"><param name="allowFullScreen" value="true"><param name="allowScriptAccess" value="always"><param name="wmode" value="transparent"><embed type="application/x-shockwave-flash" src="http://www.dailymotion.com/swf/video/$2" width="%%tb_width%%" height="%%tb_height%%" wmode="transparent" allowfullscreen="true" allowscriptaccess="always"></object>'
+			'<iframe style="float: left; margin: 10px 20px;" width="%%tb_width%%" height="%%tb_height%%" frameborder="0" src="https://www.dailymotion.com/embed/video/$2" allowfullscreen></iframe>'
 		),
 		array(
 			'/^https?:\/\/(\w+\.)?metacafe\.com\/watch\/(\d+)\/([a-zA-Z0-9_\-.]+)\/(\?[^\'"<>]+)?$/i',
-			'<div style="float:left;margin:10px 20px;width:%%tb_width%%px;height:%%tb_height%%px"><embed flashVars="playerVars=showStats=no|autoPlay=no" src="http://www.metacafe.com/fplayer/$2/$3.swf" width="%%tb_width%%" height="%%tb_height%%" wmode="transparent" allowFullScreen="true" allowScriptAccess="always" name="Metacafe_$2" pluginspage="http://www.macromedia.com/go/getflashplayer" type="application/x-shockwave-flash"></div>'
+			'<iframe style="float: left; margin: 10px 20px;" width="%%tb_width%%" height="%%tb_height%%" frameborder="0"  src="https://www.metacafe.com/embed/$2/$3/" allowfullscreen></iframe>'
 		),
 		array(
-			'/^https?:\/\/video\.google\.com\/videoplay\?docid=(\d+)([&#](.+)?)?$/i',
-			'<embed src="http://video.google.com/googleplayer.swf?docid=$1&hl=en&fs=true" style="width:%%tb_width%%px;height:%%tb_height%%px;float:left;margin:10px 20px" allowFullScreen="true" allowScriptAccess="always" type="application/x-shockwave-flash"></embed>'
-		),
-		array(
-			'/^https?:\/\/(\w+\.)?vocaroo\.com\/i\/([a-zA-Z0-9]{2,15})$/i',
-			'<object style="float: left;margin: 10px 20px;" width="148" height="44"><param name="movie" value="http://vocaroo.com/player.swf?playMediaID=$2&autoplay=0"><param name="wmode" value="transparent"><embed src="http://vocaroo.com/player.swf?playMediaID=$2&autoplay=0" width="148" height="44" wmode="transparent" type="application/x-shockwave-flash"></object>'
+                        '/^https?:\/\/(\w+\.)?vocaroo\.com\/([a-zA-Z0-9]{2,12})$/i',
+                        '<iframe style="float: left; margin: 10px 20px;" width="300" height="60" frameborder="0" src="https://vocaroo.com/embed/$2"></iframe>'
 		)
 	);
 
@@ -1432,10 +1438,10 @@ $config['nicenotice_reasons'][] = "We care, and we hope you feel better soon. We
 	$config['error']['webmerror'] 		= _('There was a problem processing your webm.');//Is this error used anywhere ?
 	$config['error']['invalidwebm'] 	= _('Invalid webm uploaded.');
 	$config['error']['webmhasaudio'] 	= _('The uploaded webm contains an audio or another type of additional stream.');
-	$config['error']['webmtoolong'] 	= _('The uploaded webm is longer than ' . $config['webm']['max_length'] . ' seconds.');
-	$config['error']['fileexists']		= _('The file (%s) <a href="%s">already exists</a>!');
+	$config['error']['webmtoolong']		=_('The uploaded webm is longer than %d seconds.');
+	$config['error']['fileexists']		= _('That file <a href="%s">already exists</a>!');
 	$config['error']['fileduplicate']		= _('You can\'t add duplicates of same file!');
-	$config['error']['fileexistsinthread']	= _('The file (%s) <a href="%s">already exists</a> in this thread!');
+	$config['error']['fileexistsinthread']	= _('That file <a href="%s">already exists</a> in this thread!');
 	$config['error']['delete_too_soon']	= _('You\'ll have to wait another %s before deleting that.');
 	$config['error']['mime_exploit']	= _('MIME type detection XSS exploit (IE) detected; post discarded.');
 	$config['error']['invalid_embed']	= _('Couldn\'t make sense of the URL of the video you tried to embed.');

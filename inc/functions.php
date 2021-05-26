@@ -4,12 +4,11 @@
  *  Copyright (c) 2010-2014 Tinyboard Development Group
  */
 
+
 if (realpath($_SERVER['SCRIPT_FILENAME']) == str_replace('\\', '/', __FILE__)) {
 	// You cannot request this file directly.
 	exit;
 }
-
-define('TINYBOARD', null);
 
 $microtime_start = microtime(true);
 
@@ -245,15 +244,17 @@ function loadConfig() {
 		if (!isset($config['image_deleted']))
 			$config['image_deleted'] = $config['dir']['static'] . 'deleted.png';
 
-		if (!isset($config['uri_thumb']))
-			$config['uri_thumb'] = $config['root'] . $board['dir'] . $config['dir']['thumb'];
-		elseif (isset($board['dir']))
-			$config['uri_thumb'] = sprintf($config['uri_thumb'], $board['dir']);
+		if (isset($board)) {
+			if (!isset($config['uri_thumb']))
+				$config['uri_thumb'] = $config['root'] . $board['dir'] . $config['dir']['thumb'];
+			elseif (isset($board['dir']))
+				$config['uri_thumb'] = sprintf($config['uri_thumb'], $board['dir']);
 
-		if (!isset($config['uri_img']))
-			$config['uri_img'] = $config['root'] . $board['dir'] . $config['dir']['img'];
-		elseif (isset($board['dir']))
-			$config['uri_img'] = sprintf($config['uri_img'], $board['dir']);
+			if (!isset($config['uri_img']))
+				$config['uri_img'] = $config['root'] . $board['dir'] . $config['dir']['img'];
+			elseif (isset($board['dir']))
+				$config['uri_img'] = sprintf($config['uri_img'], $board['dir']);
+		}
 
 		if (!isset($config['uri_shadow_thumb']))
 			$config['uri_shadow_thumb'] = $config['root'] . $board['dir'] . $config['dir']['shadow_del'] . $config['dir']['thumb'];
@@ -310,7 +311,7 @@ function loadConfig() {
 
 	if ($config['verbose_errors']) {
 		set_error_handler('verbose_error_handler');
-		error_reporting(E_ALL);
+		error_reporting($config['deprecation_errors'] ? E_ALL : E_ALL & ~E_DEPRECATED);
 		ini_set('display_errors', true);
 		ini_set('html_errors', false);
 	} else {
@@ -408,8 +409,13 @@ function _syslog($priority, $message) {
 }
 
 function verbose_error_handler($errno, $errstr, $errfile, $errline) {
+	global $config;
+
 	if (error_reporting() == 0)
 		return false; // Looks like this warning was suppressed by the @ operator.
+	if ($errno == E_DEPRECATED && !$config['deprecation_errors'])
+		return false;
+
 	error(utf8tohtml($errstr), true, array(
 		'file' => $errfile . ':' . $errline,
 		'errno' => $errno,
@@ -424,7 +430,7 @@ function define_groups() {
 	foreach ($config['mod']['groups'] as $group_value => $group_name) {
 		$group_name = strtoupper($group_name);
 		if(!defined($group_name)) {
-			define($group_name, $group_value, true);
+			define($group_name, $group_value);
 		}
 	}
 	
@@ -1017,7 +1023,7 @@ function checkBan($board = false) {
 		die();
 
 	foreach ($ips as $ip) {
-		$bans = Bans::find($_SERVER['REMOTE_ADDR'], $board, $config['show_modname']);
+		$bans = Bans::find($ip, $board, $config['show_modname']);
 	
 		foreach ($bans as &$ban) {
 			if ($ban['expires'] && $ban['expires'] < time()) {
@@ -1757,7 +1763,8 @@ function deletePostPermanent($id, $error_if_doesnt_exist=true, $rebuild_after=tr
 	// Delete posts and maybe replies
 	while ($post = $query->fetch(PDO::FETCH_ASSOC)) {
 		event('delete', $post);
-		
+
+		$thread_id = $post['thread'];
 		if (!$post['thread']) {
 			// Delete thread HTML page
 			file_unlink($board['dir'] . $config['dir']['res'] . link_for($post) );
@@ -1878,12 +1885,22 @@ function deletePostPermanent($id, $error_if_doesnt_exist=true, $rebuild_after=tr
 		if (isset($tmp_board))
 			openBoard($tmp_board);
 
-		$query = prepare("DELETE FROM ``cites`` WHERE (`target_board` = :board AND (`target` = " . implode(' OR `target` = ', $ids) . ")) OR (`board` = :board AND (`post` = " . implode(' OR `post` = ', $ids) . "))");
-		$query->bindValue(':board', $board['uri']);
-		$query->execute() or error(db_error($query));
+	$query = prepare("DELETE FROM ``cites`` WHERE (`target_board` = :board AND (`target` = " . implode(' OR `target` = ', $ids) . ")) OR (`board` = :board AND (`post` = " . implode(' OR `post` = ', $ids) . "))");
+	$query->bindValue(':board', $board['uri']);
+	$query->execute() or error(db_error($query));
+	
+	if ($config['anti_bump_flood']) {
+                $query = prepare(sprintf("SELECT `time` FROM ``posts_%s`` WHERE (`thread` = :thread OR `id` = :thread) AND `sage` = 0 ORDER BY `time` DESC LIMIT 1", $board['uri']));
+                $query->bindValue(':thread', $thread_id);
+                $query->execute() or error(db_error($query));
+                $bump = $query->fetchColumn();
+
+                $query = prepare(sprintf("UPDATE ``posts_%s`` SET `bump` = :bump WHERE `id` = :thread", $board['uri']));
+                $query->bindValue(':bump', $bump);
+                $query->bindValue(':thread', $thread_id);
+                $query->execute() or error(db_error($query));
 	}
-
-
+	
 	if (isset($rebuild) && $rebuild_after) {
 		buildThread($rebuild);
 		buildIndex();
@@ -2827,7 +2844,7 @@ function markup(&$body, $track_cites = false, $op = false) {
 		$body = str_replace("\t", '&#09;', $body);
 		$body = $tidy->repairString($body, array(
 			'doctype' => 'omit',
-			'bare' => true,
+			'bare' => $config['markup_repair_tidy_bare'],
 			'literal-attributes' => true,
 			'indent' => false,
 			'show-body-only' => true,
